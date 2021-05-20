@@ -7,15 +7,14 @@ client = discord.Client()
 
 bot = Bot(command_prefix='--')
 
+dangerRooms = {}
 
-state = 0
-wolverine = datamodels.Wolverine(50)
-players = []
-player = datamodels.Player(15, {"electrocute": "Uh Oh! Wolverine hits {0} and the electrcity hits them both! Wolverine and {0} each take 2 Damage."})
 
 @bot.command(name='enterroom')
 async def enter_room(context):
-	players.append(context.message.author.name)
+	if context.channel.id not in dangerRooms:
+		dangerRooms[context.channel.id] = Fight()
+	dangerRooms[context.channel.id].add_player()
 	await context.send("{0} entered the Danger Room".format(context.message.author.name))
 
 @bot.command(name='startfight')

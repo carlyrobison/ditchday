@@ -2,14 +2,13 @@ from discord.ext.commands import Bot
 import discord
 import asyncio
 import datamodels
+import constants
 
 client = discord.Client()
 
 bot = Bot(command_prefix='--')
 
 dangerRooms = {}
-
-ADMIN_CHANNEL = 845128047353921536
 
 @bot.command(name='enter')
 async def enter_room(context):
@@ -31,7 +30,6 @@ async def intro_message(context):
 		if len(fight_room.players.keys()) == 0: # no players are entered
 			await context.send("Please --enter the Danger Room")
 		else:
-			await context.send("blah blah intro stuff")
 			await context.send(fight_room.wolverine_attack())
 	except KeyError:
 		await context.send("Please --enter the Danger Room")
@@ -47,6 +45,7 @@ async def counterattack(context, *args):
 	elif gameWon:
 		print(fight_room)
 		print(fight_room.history_player_attack())
+		await bot.get_channel(constants.ADMIN_CHANNEL).send(fight_room.history_player_attack())
 		dangerRooms.pop(context.channel.id, None)
 	else:
 		await context.send(get_fight_room(context).wolverine_attack())
@@ -59,9 +58,40 @@ async def fight_status(context, *args):
 		dangerRooms[context.channel.id] = datamodels.FightPart1()
 		await context.send(get_fight_room(context))
 
+@bot.command(name='dangerroominstructions')
+async def list_instructions(context, *args):
+	await context.send(constants.INSTRUCTIONS)
 
 def get_fight_room(context):
 	return dangerRooms[context.channel.id]
 
+
+dangerRoomsPart2 = {}
+
+@bot.command(name='replayinstructions')
+async def list_replay_instructions(context, *args):
+	await context.send(constants.INSTRUCTIONS_PART_2)
+
+@bot.command(name='loadpart2history')
+async def load_history(context, *, arg):
+	dangerRoomsPart2[context.channel.id] = datamodels.FightPart2(arg)
+	await context.send("Loaded fight history: {0}. Please delete this message for maximum challenge.".format(dangerRoomsPart2[context.channel.id]))
+
+@bot.command(name='resetreplay')
+async def reset_replay(context, *arg):
+	try:
+		dr = dangerRoomsPart2[context.channel.id]
+		dangerRoomsPart2[context.channel.id] = datamodels.FightPart2(dr.history_player_attack())
+		await context.send("Fight replay reset.")
+	except KeyError:
+		await context.send("Missing fight history. Ask an alum/senior to load it.")
+
+@bot.command(name='attack')
+async def attack(context, *args):
+	try:
+		dr = dangerRoomsPart2[context.channel.id]
+		await context.send(dr.manage_attack(context.message.content))
+	except KeyError:
+		await context.send("Missing fight history. Ask an alum/senior to load it.")
 
 bot.run('')

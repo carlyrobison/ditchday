@@ -94,4 +94,11 @@ async def attack(context, *args):
 	except KeyError:
 		await context.send("Missing fight history. Ask an alum/senior to load it.")
 
+@bot.command(name='fight2status')
+async def fight_status(context, *args):
+	try:
+		await context.send(dangerRoomsPart2[context.channel.id])
+	except KeyError:
+		await context.send("No fight found")
+
 bot.run('')

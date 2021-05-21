@@ -179,7 +179,7 @@ class PlayerPart2:
 		self.name = name
 
 	def __repr__(self):
-		return "{0} with hp {1}".format(self.user.name, self.hp)
+		return "{0} with hp {1}".format(self.name, self.hp)
 
 	# returns the string to send, and the hpchange to deal to Wolverine, and the damage to the player
 	def attempt_counter(self, attack, responding_to):
@@ -205,27 +205,33 @@ class PlayerPart2:
 class FightPart2:
 	def __init__(self, players_history):
 		self.wolverine = WolverinePart2()
-		self.players = {}
 		self.roundNum = 0
 		self.player_counters_history = json.loads(players_history) # process the history
-		print(self.player_counters_history)
+		self.players = {}
+		self.load_targets()
 
 	def __repr__(self):
-		return "Fight with Wolverine: {0}, on attack {1}, attack history {2}".format(self.wolverine, self.roundNum, self.player_counters_history)
+		return "Fight with Wolverine: {0}, players {3}, on attack {1}, attack history {2}".format(self.wolverine, self.roundNum, self.player_counters_history, self.players)
 
+	def load_targets(self):
+		for t in list(set([p[0] for p in self.player_counters_history])):
+			self.players[t] = PlayerPart2(t)
+
+	# Returns False if the target is dead
 	def get_target(self):
 		target = self.player_counters_history[self.roundNum][0]
 		if target not in self.players:
-			self.players[target] = PlayerPart2(target)
-		return target
+			return False, target
+		return True, target
 
 	# Returns the message to send to the chat
 	def manage_attack(self, attack):
 		response = []
 
-		target = self.get_target()
-		targetPlayer = self.players[target]
-		if targetPlayer.is_alive():
+		targetPlayerAlive, target = self.get_target()
+
+		if targetPlayerAlive:
+			targetPlayer = self.players[target]
 			isValid, attackName, attackDesc = self.wolverine.is_valid_attack(attack, target)
 			if isValid:
 				response.append(attackDesc)
@@ -235,6 +241,7 @@ class FightPart2:
 				# deal player damage
 				targetPlayer.take_damage(player_hp_change)
 				if not targetPlayer.is_alive():
+					self.players.pop(target)
 					response.append("{0} has taken too much damage and has been neutralized!".format(target))
 
 				# deal wolverine damage
@@ -245,11 +252,14 @@ class FightPart2:
 			else:
 				response.append("Attack was invalid. Try again!")
 		else:
-			self.roundNum += 1
-			response.append("Target is already incapactitated. No damage dealt or taken.")
+			if len(self.players) == 0:
+				response.append("Wolverine has survived the fight! Continue with HUBRIS")
+			else:
+				self.roundNum += 1
+				response.append("Target is already incapactitated. No damage dealt or taken.")
 
 		
-		if self.roundNum > len(self.player_counters_history):
+		if self.roundNum >= len(self.player_counters_history):
 			response.append("Wolverine has survived the fight! Continue with HUBRIS")
 
 		return "\n".join(response)

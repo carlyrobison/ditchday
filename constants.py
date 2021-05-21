@@ -4,7 +4,7 @@ import actions_reactions
 ADMIN_CHANNEL = 845128047353921536
 
 PLAYER_HP = 15
-WOLVERINE_HP = 50
+WOLVERINE_HP = 5
 
 SECONDS_TO_RESPOND = 10
 
@@ -68,7 +68,7 @@ you win!
 
 As Wolverine, you have the following attacks:
 --attack claws
-You go for your tatget with your Claws!
+You go for your target with your Claws!
 
 --attack slap
 You wind up to slap your target across the face.
